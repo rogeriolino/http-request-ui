@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html ng-app="app">
+    <head>
+        <title>HTTP Request UI</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="author" content="Rogerio Alencar Lino Filho">
+        <meta name="description" content="HTTP request maker">
+        
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    </head>
+    <body>
+        <a href="https://github.com/rogeriolino/http-request-ui"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
+        
+        <div class="container" ng-controller="AppController as ctrl">
+            <div class="page-header">
+                <h1>HTTP Request UI</h1>
+            </div>
+            <form id="frm" ng-submit="ctrl.send()">
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="method" class="sr-only">Method</label>
+                            <select id="method" class="form-control" ng-model="ctrl.request.method" ng-options="method for method in ctrl.methods"></select>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="form-group">
+                            <label for="url" class="sr-only">URL</label>
+                            <input id="url" type="text" class="form-control" placeholder="URL" ng-model="ctrl.request.url">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="contentType" class="sr-only">Content-type</label>
+                            <select id="contentType" class="form-control" ng-model="ctrl.request.contentType" ng-options="type for type in ctrl.contentTypes"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="body" class="sr-only">Body</label>
+                    <textarea id="body" class="form-control" placeholder="Body" ng-model="ctrl.request.body"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <span class="glyphicon glyphicon-send"></span>
+                    Enviar
+                </button>
+                
+                <hr>
+                
+                <div ng-show="ctrl.response.status">
+                    <h3>
+                        Response <span class="label label-{{ctrl.responseClass(ctrl.response)}} label-lg">Status {{ctrl.response.status}}</span>
+                    </h3>
+                    <pre>{{ctrl.response.data}}</pre>
+                </div>
+            </form>
+        </div>
+
+        <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.6/angular.min.js"></script>
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+        
+        <script>
+            angular.module('app', [])
+            .controller('AppController', function($http) {
+                var ctrl = this;
+                ctrl.methods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
+                ctrl.contentTypes = ['application/json', 'text/html', 'text/xml', 'text/plain'];
+                
+                ctrl.request = {
+                    method: ctrl.methods[0],
+                    contentType: ctrl.contentTypes[0],
+                };
+                ctrl.response = {};
+                
+                ctrl.send = function() {
+                    $('form :input').prop('disabled', true);
+                    ctrl.response = {};
+                    
+                    var req = {
+                        method: ctrl.request.method,
+                        url: ctrl.request.url,
+                        headers: {
+                          'Content-Type': ctrl.request.contentType
+                        },
+                        data: ctrl.request.body
+                    };
+
+                    $http(req).then(function(response) {
+                        $('form :input').prop('disabled', false);
+                        
+                        ctrl.response.data = response.data;
+                        ctrl.response.status = response.status;
+                    }, function(response) {
+                        $('form :input').prop('disabled', false);
+                        
+                        ctrl.response.data = response.data || "Request failed";
+                        ctrl.response.status = response.status;
+                    });
+                };
+                
+                ctrl.responseClass = function(response) {
+                    switch (response.status) {
+                        case 200:
+                            return 'success';
+                        case 301:
+                        case 302:
+                            return 'warning';
+                        case 404:
+                            return 'info';
+                        default:
+                            return 'danger';
+                    }
+                };
+                
+            });
+        </script>
+    </body>
+</html>
